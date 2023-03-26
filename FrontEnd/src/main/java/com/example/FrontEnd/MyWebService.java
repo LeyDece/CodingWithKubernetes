@@ -17,9 +17,9 @@ public class MyWebService {
 		try{
             RestTemplate restTemplate = new RestTemplate();
             String s = restTemplate.getForObject(backEndURL, String.class);
-            return "hello (from the front end)" + " " + s + " (from the back end)";
+            return "Retrieving every user from backend  : " + s;
         }catch (Exception e){
-            return e.getLocalizedMessage();
+            return "Error : " + e.toString();
         }
     }
 

@@ -14,10 +14,37 @@ spec:
     spec:
       containers:
       - name: front-end-container
-        image: efrei/front-end:1
+        image: pdecelian/frontend:3
         imagePullPolicy: Always
         ports:
           - containerPort: 80
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres
+  template:
+    metadata:
+      labels:
+        app: postgres
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:latest
+          ports:
+            - containerPort: 5432
+          env:
+            - name: POSTGRES_USER
+              value: yourusername
+            - name: POSTGRES_PASSWORD
+              value: yourpassword
+            - name: POSTGRES_DB
+              value: yourdatabasename
 ---
 
 apiVersion: apps/v1
@@ -36,7 +63,7 @@ spec:
     spec:
       containers:
         - name: back-end-container
-          image: efrei/back-end:1
+          image: pdecelian/backend:7
           imagePullPolicy: Always
           ports:
             - containerPort: 80
@@ -48,7 +75,7 @@ metadata:
   name: front-end-service
 spec:
   ports:
-    - name: http
+    - protocol: TCP
       targetPort: 8080
       port: 80
   type: NodePort
@@ -70,22 +97,38 @@ spec:
     app: back-end
 ---
 
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres-service
+spec:
+  selector:
+    app: postgres
+  ports:
+    - name: postgres
+      port: 5432
+      targetPort: 5432
+  type: ClusterIP
+
+---
+
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: front-end-ingress
   annotations:
-    kubernetes.io/ingress.class: public
+    # If the class annotation is not specified it defaults to "gce".
+    kubernetes.io/ingress.class: "gce"
 spec:
   rules:
-    - host: front-end.localhost
-      http:
+    - http: 
         paths:
-          - path: /
-            pathType: Prefix
+          - path: /*
+            pathType: ImplementationSpecific 
             backend:
               service:
                 name: front-end-service
                 port:
                   number: 80
 
+---
